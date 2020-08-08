@@ -22,7 +22,7 @@ theta = np.linspace(0,5*pi,100)
 # Xh = radius*np.sin(theta)
 # Yh = theta*(length/(turns*2*pi))
 
-radius = radius*1.05
+radius = radius*1.01
 w = 0.5
 t = np.arange(0, 100, 0.01)
 Zh = radius*np.cos(w*t)
@@ -34,9 +34,17 @@ Y = np.column_stack((Yh-thickness/2, Yh+thickness/2)).T
 X = np.column_stack((Xh, Xh)).T
 Z = np.column_stack((Zh, Zh)).T
 
+fig = mlab.figure(figure='Py Filament Winder', size=(900, 420))
 
-s = mlab.mesh(X, Y,Z ,color = (155/255,196/255,197/255))
-t = mlab.mesh(x, z, y)
+CYLINDER_COLOR = (0,94,120)
+STRAND_COLOR = (35,43,43)
 
+tuple(map(lambda x: x/255, CYLINDER_COLOR))
+
+filament = mlab.mesh(X, Y,Z ,color = tuple(map(lambda x: x/255, STRAND_COLOR)))
+cylinder = mlab.mesh(x, z, y,color = tuple(map(lambda x: x/255, CYLINDER_COLOR)))
+mlab.view(azimuth=0,distance=720)
+
+fig.scene.scene_editor._tool_bar.setVisible(False)
 
 mlab.show()

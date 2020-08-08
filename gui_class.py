@@ -1,34 +1,98 @@
 import tkinter as tk
+from tkinter.ttk import Progressbar
 
 from PIL import ImageTk, Image
-
+from multiprocessing import Process
+from winding2 import Winding
 
 class MainApplication(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
 
+
+
         self.title('Py Filament Winder')
         container = tk.Frame(self)
         container.pack(side="top", fill="both", expand=True)
+        self.values_frm = tk.Frame(container)
 
-        values_frm = tk.Frame(container)
-
-        frame_1 = Mandrel_Values_Screen(values_frm, self)
+        frame_1 = Mandrel_Values_Screen(self.values_frm, self)
         frame_1.pack(side='top', fill="both")
-        frame_2 = Winding_Values_Screen(values_frm, self)
+        frame_2 = Winding_Values_Screen(self.values_frm, self)
         frame_2.pack(side='top', fill="both")
 
-        button = tk.Button(values_frm, text="Run", bg="#9bc4c5",command = self.submit_callback)
-        button.pack(side='bottom', fill='both')
-        values_frm.pack(side='left')
+        self.run_button = tk.Button(self.values_frm, text="Run", bg="#9bc4c5",command = self.submit_callback)
+        self.run_button.pack(side='bottom', fill='both')
+        self.values_frm.pack(side='left')
         self.frame_3 = Cylinder_Diagram(container, self)
         self.frame_3.pack(side='right', fill="both")
 
         self.mandrel_values_dict = {'Total Length': "0", 'Diameter': "0", 'Left Turnaround Length': "0",
                                     'Right Turnaround Length': "0"}
+
+
     def submit_callback(self):
-        print(1)
-        import anim
+        self.run_button.destroy()
+
+        a = Winding()
+
+        def bar():
+            import time
+            progress['value'] = 20
+            tk.update_idletasks()
+            time.sleep(0.5)
+
+            progress['value'] = 40
+            tk.update_idletasks()
+            time.sleep(0.5)
+
+            progress['value'] = 50
+            tk.update_idletasks()
+            time.sleep(0.5)
+
+            progress['value'] = 60
+            tk.update_idletasks()
+            time.sleep(0.5)
+
+            progress['value'] = 80
+            tk.update_idletasks()
+            time.sleep(0.5)
+
+            progress['value'] = 100
+            tk.update_idletasks()
+            time.sleep(0.5)
+
+            progress['value'] = 80
+            tk.update_idletasks()
+            time.sleep(0.5)
+
+            progress['value'] = 60
+            tk.update_idletasks()
+            time.sleep(0.5)
+
+            progress['value'] = 50
+            tk.update_idletasks()
+            time.sleep(0.5)
+
+            progress['value'] = 40
+            tk.update_idletasks()
+            time.sleep(0.5)
+
+            progress['value'] = 20
+            tk.update_idletasks()
+            time.sleep(0.5)
+            progress['value'] = 0
+
+        progress = Progressbar(self.values_frm, orient=tk.HORIZONTAL,
+                               length=320, mode='indeterminate')
+        progress.pack(side='bottom')
+        progress.start()
+        x = Process(target=a.animate, args=())
+        x.start()
+
+
+
+
 
     def filter_callback(self, new_value, mandrel_value):
         self.mandrel_values_dict[mandrel_value] = new_value
@@ -44,7 +108,7 @@ class Cylinder_Diagram(tk.Frame):
     CANVAS_COLOR = '#ece8c5'
 
     def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent, relief=tk.RIDGE, borderwidth=5)
+        tk.Frame.__init__(self, parent,bg=self.CANVAS_COLOR, relief=tk.RIDGE, borderwidth=5)
         self.parent = parent
         img = ImageTk.PhotoImage(Image.open("Cylinder Pics/bitmap.png"))
 
@@ -118,7 +182,7 @@ class Winding_Values_Screen(tk.Frame):
             LabelEntry(self, controller, value_name)
 
 
+if __name__ == '__main__':
+    app = MainApplication()
 
-app = MainApplication()
-
-app.mainloop()
+    app.mainloop()
