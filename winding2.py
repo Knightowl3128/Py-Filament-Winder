@@ -25,11 +25,10 @@ class Winding:
 
         self.dz = 1
 
-        self.total_time = 500
+        self.total_time = 400
 
     def get_alpha(self,z,dz,t):
         if np.round(z, 2) == 0 or np.round(z, 2) == self.length or self.dwell_state:
-            print('asdfasdfasdfasdf')
             if self.phi_dwell == 0:
                 if np.round(z, 1) == 0:
                     alpha = pi / 2 - pi / 2000
@@ -157,21 +156,12 @@ class Winding:
 
         deg = 0
         mlab.view(azimuth=0, distance=720)
-        import time
 
-        # while True:
-        #     if deg == 360: deg = 0
-        #     print(deg)
-        #     mlab.view(azimuth=deg, distance=720)
-        #     deg += 1
-        #     time.sleep(1/60)
-        #     fig.scene.render()
-        #     # mlab.show()
+
 
         @mlab.animate(delay=10, ui=False)
         def anim():
             while 1:
-
                 fig.scene.camera.azimuth(.1)
                 fig.scene.render()
                 yield
@@ -182,5 +172,4 @@ class Winding:
 if __name__ == '__main__':
 
     a = Winding()
-
     a.animate()

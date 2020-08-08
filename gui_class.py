@@ -4,17 +4,19 @@ from tkinter.ttk import Progressbar
 from PIL import ImageTk, Image
 from multiprocessing import Process
 from winding2 import Winding
+import time
 
 class MainApplication(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
-
-
-
         self.title('Py Filament Winder')
         container = tk.Frame(self)
         container.pack(side="top", fill="both", expand=True)
         self.values_frm = tk.Frame(container)
+
+        self.winding_params_dict = {'Angular Velocity (rad/s)':'0.2', 'Tow Thickness (mm)': '6', 'Tow Angle, \U000003B1 (deg)' : '45', 'Skip Index' : 1, 'Pattern Number' : 1}
+        self.mandrel_values_dict = {'Total Length': "750", 'Diameter': "150", 'Left Turnaround Length': "225",
+                                    'Right Turnaround Length': "525"}
 
         frame_1 = Mandrel_Values_Screen(self.values_frm, self)
         frame_1.pack(side='top', fill="both")
@@ -27,14 +29,28 @@ class MainApplication(tk.Tk):
         self.frame_3 = Cylinder_Diagram(container, self)
         self.frame_3.pack(side='right', fill="both")
 
-        self.mandrel_values_dict = {'Total Length': "0", 'Diameter': "0", 'Left Turnaround Length': "0",
-                                    'Right Turnaround Length': "0"}
-
 
     def submit_callback(self):
+        winding = Winding()
+
+        for name, value in self.mandrel_values_dict.items():
+            if not value.isnumeric() or int(value) == 0:
+                self.run_button['text'] = 'Only Non Zero Numeric Values'
+                def default_text():
+                    self.run_button['text'] = 'Run'
+                self.run_button.after(2000,default_text)
+                return
+            else:
+                self.mandrel_values_dict[name] = float(value)
+
+        winding.length = self.mandrel_values_dict['Total Length']
+        winding.radius = self.mandrel_values_dict['Diameter']/2
+        winding.turnaround_l = self.mandrel_values_dict['Left Turnaround Length']
+        winding.turnaround_r = self.mandrel_values_dict['Right Turnaround Length']
+
+
         self.run_button.destroy()
 
-        a = Winding()
 
         def bar():
             import time
@@ -87,7 +103,7 @@ class MainApplication(tk.Tk):
                                length=320, mode='indeterminate')
         progress.pack(side='bottom')
         progress.start()
-        x = Process(target=a.integrate, args=())
+        x = Process(target=winding.integrate, args=())
         x.start()
 
 
@@ -144,13 +160,15 @@ class Cylinder_Diagram(tk.Frame):
 
 
 class LabelEntry(tk.Frame):
-    def __init__(self, parent, controller, text, mirror=False):
+    def __init__(self, parent, controller, text,entry_text = None, mirror=False):
         super().__init__(parent)
         self.pack(fill=tk.X)
 
         lbl = tk.Label(self, text=text, width=20, anchor='w')
         lbl.pack(side=tk.LEFT, padx=5, pady=5)
         self.entry = tk.Entry(self)
+        if entry_text != None:
+            self.entry.insert(0,entry_text)
         self.entry.pack(side=tk.LEFT, fill=tk.X, padx=5)
         if mirror:
             vcmd = (self.entry.register(lambda x: controller.filter_callback(x, text)), "%P")
@@ -165,8 +183,9 @@ class Mandrel_Values_Screen(tk.Frame):
         lbl = tk.Label(self, text='Mandrel Values', width=20, anchor='w', font=('Helvetica', 12, 'bold'))
         lbl.pack(fill='x', padx=5)
         self.labels = []
-        for value_name in self.mandrel_values:
-            self.labels.append(LabelEntry(self, controller, value_name, mirror=True))
+        for name, value in controller.mandrel_values_dict.items():
+
+            LabelEntry(self, controller, name, entry_text=value,mirror = True)
 
 
 class Winding_Values_Screen(tk.Frame):
@@ -176,8 +195,9 @@ class Winding_Values_Screen(tk.Frame):
         tk.Frame.__init__(self, parent, relief=tk.RIDGE, borderwidth=5)
         lbl = tk.Label(self, text='Winding Parameters', width=20, anchor='w', font=('Helvetica', 12, 'bold'))
         lbl.pack(fill='x', padx=5)
-        for value_name in self.winding_values:
-            LabelEntry(self, controller, value_name)
+        for name,value in controller.winding_params_dict.items():
+
+            LabelEntry(self, controller, name,entry_text=value)
 
 
 if __name__ == '__main__':
