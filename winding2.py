@@ -25,6 +25,8 @@ class Winding:
 
         self.dz = 1
 
+        self.total_time = 500
+
     def get_alpha(self,z,dz,t):
         if np.round(z, 2) == 0 or np.round(z, 2) == self.length or self.dwell_state:
             print('asdfasdfasdfasdf')
@@ -112,12 +114,13 @@ class Winding:
         y0 = self.initial_position
 
         # time points
-        t = np.arange(0, 100, 0.01)
+        t = np.arange(0, self.total_time , 0.01)
 
         # solve ODE
         y = odeint(model, y0, t, hmax=0.01)
 
         np.savetxt('z_position.csv', y, delimiter=',')
+        self.animate()
         # plt.plot(t, y)
         # plt.xlabel('time')
         # plt.ylabel('y(t)')
@@ -133,7 +136,7 @@ class Winding:
 
         radius = self.radius * 1.01
 
-        t = np.arange(0, 100, 0.01)
+        t = np.arange(0, self.total_time , 0.01)
         Zh = radius * np.cos(self.w * t)
         Xh = radius * np.sin(self.w * t)
         Yh = np.loadtxt('z_position.csv', delimiter=',')
@@ -151,11 +154,33 @@ class Winding:
 
         filament = mlab.mesh(X, Y, Z, color=tuple(map(lambda x: x / 255, STRAND_COLOR)))
         cylinder = mlab.mesh(x, z, y, color=tuple(map(lambda x: x / 255, CYLINDER_COLOR)))
+
+        deg = 0
         mlab.view(azimuth=0, distance=720)
+        import time
 
+        # while True:
+        #     if deg == 360: deg = 0
+        #     print(deg)
+        #     mlab.view(azimuth=deg, distance=720)
+        #     deg += 1
+        #     time.sleep(1/60)
+        #     fig.scene.render()
+        #     # mlab.show()
 
+        @mlab.animate(delay=10, ui=False)
+        def anim():
+            while 1:
+
+                fig.scene.camera.azimuth(.1)
+                fig.scene.render()
+                yield
+
+        a = anim()
         mlab.show()
 
-# a = Winding()
-#
-# a.animate()
+if __name__ == '__main__':
+
+    a = Winding()
+
+    a.animate()

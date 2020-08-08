@@ -87,10 +87,8 @@ class MainApplication(tk.Tk):
                                length=320, mode='indeterminate')
         progress.pack(side='bottom')
         progress.start()
-        x = Process(target=a.animate, args=())
+        x = Process(target=a.integrate, args=())
         x.start()
-
-
 
 
 
