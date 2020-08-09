@@ -1,8 +1,8 @@
 import numpy as np
+from mayavi import mlab
 from numpy import pi
 from scipy.integrate import odeint
-import matplotlib.pyplot as plt
-from mayavi import mlab
+
 
 class Winding:
     def __init__(self):
@@ -25,7 +25,7 @@ class Winding:
 
         self.dz = 1
 
-        self.total_time = 400
+        self.total_time = 4000
 
     def get_alpha(self,z,dz,t):
         if np.round(z, 2) == 0 or np.round(z, 2) == self.length or self.dwell_state:

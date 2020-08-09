@@ -1,10 +1,12 @@
 import tkinter as tk
+from multiprocessing import Process
 from tkinter.ttk import Progressbar
 
+import numpy as np
 from PIL import ImageTk, Image
-from multiprocessing import Process
+
 from winding2 import Winding
-import time
+
 
 class MainApplication(tk.Tk):
     def __init__(self, *args, **kwargs):
@@ -14,16 +16,17 @@ class MainApplication(tk.Tk):
         container.pack(side="top", fill="both", expand=True)
         self.values_frm = tk.Frame(container)
 
-        self.winding_params_dict = {'Angular Velocity (rad/s)':'0.2', 'Tow Thickness (mm)': '6', 'Tow Angle, \U000003B1 (deg)' : '45', 'Skip Index' : 1, 'Pattern Number' : 1}
+        self.winding_params_dict = {'Angular Velocity (rad/s)': '0.2', 'Tow Thickness (mm)': '6',
+                                    'Tow Angle, \U000003B1 (deg)': '45', 'Skip Index': '1', 'Pattern Number': '1'}
         self.mandrel_values_dict = {'Total Length': "750", 'Diameter': "150", 'Left Turnaround Length': "225",
                                     'Right Turnaround Length': "525"}
 
         frame_1 = Mandrel_Values_Screen(self.values_frm, self)
         frame_1.pack(side='top', fill="both")
-        frame_2 = Winding_Values_Screen(self.values_frm, self)
-        frame_2.pack(side='top', fill="both")
+        self.frame_2 = Winding_Values_Screen(self.values_frm, self)
+        self.frame_2.pack(side='top', fill="both")
 
-        self.run_button = tk.Button(self.values_frm, text="Run", bg="#9bc4c5",command = self.submit_callback)
+        self.run_button = tk.Button(self.values_frm, text="Run", bg="#9bc4c5", command=self.submit_callback)
         self.run_button.pack(side='bottom', fill='both')
         self.values_frm.pack(side='left')
         self.frame_3 = Cylinder_Diagram(container, self)
@@ -33,24 +36,31 @@ class MainApplication(tk.Tk):
     def submit_callback(self):
         winding = Winding()
 
-        for name, value in self.mandrel_values_dict.items():
-            if not value.isnumeric() or int(value) == 0:
-                self.run_button['text'] = 'Only Non Zero Numeric Values'
-                def default_text():
-                    self.run_button['text'] = 'Run'
-                self.run_button.after(2000,default_text)
-                return
-            else:
-                self.mandrel_values_dict[name] = float(value)
+        for item in self.frame_2.entries:
+            self.winding_params_dict[item.lbl['text']] = item.entry.get()
+        print(self.winding_params_dict)
+
+        def default_text():
+            self.run_button['text'] = 'Run'
+
+        for dicts in [self.winding_params_dict, self.mandrel_values_dict]:
+            for name, value in dicts.items():
+                if not value.replace('.', '', 1).isdigit() or float(value) == 0:
+                    self.run_button['text'] = 'Only Non Zero Numeric Values'
+
+                    self.run_button.after(2000, default_text)
+                    return
+                else:
+                    dicts[name] = float(value)
 
         winding.length = self.mandrel_values_dict['Total Length']
-        winding.radius = self.mandrel_values_dict['Diameter']/2
+        winding.radius = self.mandrel_values_dict['Diameter'] / 2
         winding.turnaround_l = self.mandrel_values_dict['Left Turnaround Length']
         winding.turnaround_r = self.mandrel_values_dict['Right Turnaround Length']
 
-
-        self.run_button.destroy()
-
+        winding.alpha_i = np.deg2rad(self.winding_params_dict['Tow Angle, \U000003B1 (deg)'])
+        winding.w = self.winding_params_dict['Angular Velocity (rad/s)']
+        winding.thickness = self.winding_params_dict['Tow Thickness (mm)']
 
         def bar():
             import time
@@ -99,10 +109,14 @@ class MainApplication(tk.Tk):
             time.sleep(0.5)
             progress['value'] = 0
 
+        self.run_button['text'] = 'This may take about 5 minutes'
+        self.run_button.after(5000, default_text)
+        # self.run_button.destroy()
         progress = Progressbar(self.values_frm, orient=tk.HORIZONTAL,
                                length=320, mode='indeterminate')
         progress.pack(side='bottom')
         progress.start()
+
         x = Process(target=winding.integrate, args=())
         x.start()
 
@@ -164,11 +178,11 @@ class LabelEntry(tk.Frame):
         super().__init__(parent)
         self.pack(fill=tk.X)
 
-        lbl = tk.Label(self, text=text, width=20, anchor='w')
-        lbl.pack(side=tk.LEFT, padx=5, pady=5)
+        self.lbl = tk.Label(self, text=text, width=20, anchor='w')
+        self.lbl.pack(side=tk.LEFT, padx=5, pady=5)
         self.entry = tk.Entry(self)
         if entry_text != None:
-            self.entry.insert(0,entry_text)
+            self.entry.insert(0, entry_text)
         self.entry.pack(side=tk.LEFT, fill=tk.X, padx=5)
         if mirror:
             vcmd = (self.entry.register(lambda x: controller.filter_callback(x, text)), "%P")
@@ -195,9 +209,9 @@ class Winding_Values_Screen(tk.Frame):
         tk.Frame.__init__(self, parent, relief=tk.RIDGE, borderwidth=5)
         lbl = tk.Label(self, text='Winding Parameters', width=20, anchor='w', font=('Helvetica', 12, 'bold'))
         lbl.pack(fill='x', padx=5)
+        self.entries = []
         for name,value in controller.winding_params_dict.items():
-
-            LabelEntry(self, controller, name,entry_text=value)
+            self.entries.append(LabelEntry(self, controller, name, entry_text=value))
 
 
 if __name__ == '__main__':
